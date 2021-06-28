@@ -14,6 +14,7 @@ public class Tile {
     @javax.persistence.Column(nullable = false, unique=true)
     private String title;
 
+    @JsonIgnoreProperties("password")
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
