@@ -79,6 +79,7 @@
                         data: "username=" + username + "&password=" + password,
                         dataType: "html",
                         success: function() {
+                            document.cookie = `username=${username}`;
                             window.location.href = "/";
                         },
                         error: function(err) {
