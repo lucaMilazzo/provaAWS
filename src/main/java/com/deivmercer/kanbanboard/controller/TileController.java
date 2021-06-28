@@ -28,17 +28,17 @@ public class TileController {
     private ColumnRepository columnRepository;
 
     @PostMapping(path = "/addTile")
-    public ResponseEntity<String> addTile(@RequestParam String title, @RequestParam Integer author,
+    public ResponseEntity<String> addTile(@RequestParam String title, @RequestParam String author,
                                           @RequestParam String content, @RequestParam char content_type,
-                                          @RequestParam Integer column_id) {
+                                          @RequestParam String column_title) {
 
         Optional<Tile> tile = tileRepository.findByTitle(title);
         if (tile.isPresent())
             return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
-        Optional<User> user = userRepository.findById(author);
+        Optional<User> user = userRepository.findByUsername(author);
         if (user.isEmpty())
             return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
-        Optional<Column> column = columnRepository.findById(column_id);
+        Optional<Column> column = columnRepository.findByTitle(column_title);
         if (column.isEmpty())
             return new ResponseEntity<>("Column not found.", HttpStatus.NOT_FOUND);
         else if (column.get().getStatus() != 'O')
@@ -62,36 +62,36 @@ public class TileController {
 
         Optional<Tile> tile = tileRepository.findByTitle(tile_title);
         if (tile.isPresent()) {
+            Tile tileEntity = tile.get();
+            if (tileEntity.getColumn().getStatus() == 'A')
+                return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
             Optional<Column> column = columnRepository.findByTitle(column_title);
             if (column.isPresent()) {
-                Tile tileEntity = tile.get();
                 tileEntity.setColumn(column.get());
                 tileRepository.save(tileEntity);
                 return new ResponseEntity<>("Tile moved.", HttpStatus.OK);
             }
-            return new ResponseEntity<>("Not found.", HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Column not found.", HttpStatus.NOT_FOUND);
         }
-        return new ResponseEntity<>("Not found.", HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>("Tile not found.", HttpStatus.NOT_FOUND);
     }
 
     @PatchMapping(path = "/editTile")
     public ResponseEntity<String> editTile(@RequestParam String old_title,
                                            @RequestParam(required = false) String new_title,
-                                           @RequestParam(required = false) Integer author,
                                            @RequestParam(required = false) String content,
                                            @RequestParam(required = false) Character content_type) {
 
         Optional<Tile> tile = tileRepository.findByTitle(old_title);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
-            if (new_title != null)
+            if (tileEntity.getColumn().getStatus() == 'A')
+                return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
+            if (new_title != null) {
+                Optional<Tile> tile2 = tileRepository.findByTitle(new_title);
+                if (tile2.isPresent())
+                    return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
                 tileEntity.setTitle(new_title);
-            if (author != null) {
-                Optional<User> user = userRepository.findById(author);
-                if(user.isPresent())
-                    tileEntity.setAuthor(user.get());
-                else
-                    return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
             }
             if (content != null)
                 tileEntity.setContent(content);
