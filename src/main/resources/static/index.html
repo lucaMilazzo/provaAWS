@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Kanban Board</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="./css/index.css">
+        <script>
+            if (document.cookie.split("=").length < 2)
+                window.location.href = "/login";
+        </script>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <span class="navbar-brand mb-0 h1">Kanban Board</span>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#" onclick="$('#addColumnModal').modal('show')">Add column</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        <div id="cards" style="padding-top: 10px; padding-left: 10px"></div>
+        <div class="modal" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p id="errorModalBody"></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="addColumnModal" tabindex="-1" role="dialog" aria-labelledby="addColumnModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addColumnModalLabel">Add column</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="addColumnTitle">Title:</label>
+                                <input type="text" class="form-control" id="addColumnTitle" placeholder="Column title">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="addColumn()">Submit</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="editColumnModal" tabindex="-1" role="dialog" aria-labelledby="editColumnModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editColumnModalLabel">Edit column</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="editColumnOldTitle">Title:</label>
+                                <input type="text" readonly class="form-control-plaintext" id="editColumnOldTitle" placeholder="Column title">
+                            </div>
+                            <div class="form-group">
+                                <label for="editColumnNewTitle">Title:</label>
+                                <input type="text" class="form-control" id="editColumnNewTitle" placeholder="Column title">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="editColumn()">Submit</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="addTileModal" tabindex="-1" role="dialog" aria-labelledby="addTileModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addTileModalLabel">Add tile</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="addTileTitle">Title:</label>
+                                <input type="text" class="form-control" id="addTileTitle" placeholder="Tile title">
+                            </div>
+                            <div class="form-group">
+                                <label for="addTileContent">Content:</label>
+                                <input type="text" class="form-control" id="addTileContent" placeholder="Tile content">
+                            </div>
+                            <div id="addTileContentType">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentType" id="addTileOrganizational" value="O">
+                                    <label class="form-check-label" for="addTileOrganizational">Organizational</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentType" id="addTileInformational" value="I">
+                                    <label class="form-check-label" for="addTileInformational">Informational</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="addTileColumn">Column:</label>
+                                <input type="text" readonly class="form-control-plaintext" id="addTileColumn" placeholder="Column title">
+                            </div>
+                            <div class="form-group">
+                                <label for="addTileAuthor">Author:</label>
+                                <input type="text" readonly class="form-control-plaintext" id="addTileAuthor" placeholder="Column title">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="addTile()">Submit</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="moveTileModal" tabindex="-1" role="dialog" aria-labelledby="moveTileModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="moveTileModalLabel">Move tile</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="moveTileTitle">Title:</label>
+                                <input type="text" readonly class="form-control-plaintext" id="moveTileTitle" placeholder="Tile title">
+                            </div>
+                            <div class="form-group">
+                                <label for="moveTileColumn">Column:</label>
+                                <select id="moveTileColumn" class="form-control"></select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="moveTile()">Submit</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal" id="editTileModal" tabindex="-1" role="dialog" aria-labelledby="editTileModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTileModalLabel">Edit tile</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group">
+                                <label for="editTileOldTitle">Old title:</label>
+                                <input type="text" readonly class="form-control-plaintext" id="editTileOldTitle" placeholder="Tile title">
+                            </div>
+                            <div class="form-group">
+                                <label for="editTileNewTitle">New title:</label>
+                                <input type="text" class="form-control" id="editTileNewTitle" placeholder="Tile title">
+                            </div>
+                            <div class="form-group">
+                                <label for="editTileContent">Content:</label>
+                                <input type="text" class="form-control" id="editTileContent" placeholder="Tile content">
+                            </div>
+                            <div id="editTileContentType">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="editTileContentType" id="editTileOrganizational" value="O">
+                                    <label class="form-check-label" for="editTileOrganizational">Organizational</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="editTileContentType" id="editTileInformational" value="I">
+                                    <label class="form-check-label" for="editTileInformational">Informational</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" onclick="editTile()">Submit</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+        <script>
+            $(document).ready(function() {
+                $.ajax({
+                    type: "GET",
+                    url: "/api/getAllColumns",
+                    success: function(data) {
+                        let cards = $("#cards");
+                        let row = document.createElement("div");
+                        row.className = "row";
+                        cards.append(row);
+                        for (let column of data) {
+                            let col = document.createElement("div")
+                            col.className = "col-md";
+                            if (column.status === 'A')
+                                col.className += " archived";
+                            row.appendChild(col);
+                            let div = document.createElement("div");
+                            div.style = "padding-top: 10px";
+                            col.appendChild(div);
+                            let deck = document.createElement("div");
+                            deck.className = "container";
+                            col.appendChild(deck);
+                            createHeader(deck, column.title, column.status);
+                            for (let tile of column.tiles) {
+                                createCard(deck, tile.title, tile.content, column.status);
+                            }
+                            let option = document.createElement("option");
+                            option.innerText = column.title;
+                            $("#moveTileColumn").append(option);
+                        }
+                    },
+                    error: function(err) {
+                        showErrorModal(err.responseText);
+                    }
+                });
+            });
+        </script>
+        <script src="./js/IndexController.js"></script>
+    </body>
+</html>
