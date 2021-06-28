@@ -29,15 +29,23 @@ public class TileController {
 
     @PostMapping(path = "/addTile")
     public ResponseEntity<String> addTile(@RequestParam String title, @RequestParam Integer author,
-                                          @RequestParam String content, @RequestParam char content_type) {
+                                          @RequestParam String content, @RequestParam char content_type,
+                                          @RequestParam Integer column_id) {
 
+        Optional<Tile> tile = tileRepository.findByTitle(title);
+        if (tile.isPresent())
+            return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
         Optional<User> user = userRepository.findById(author);
-        if(user.isPresent()) {
-            Tile tile = TileFactory.getTile(title, user.get(), content, content_type);
-            tileRepository.save(tile);
-            return new ResponseEntity<>("Tile created.", HttpStatus.CREATED);
-        }
-        return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
+        if (user.isEmpty())
+            return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
+        Optional<Column> column = columnRepository.findById(column_id);
+        if (column.isEmpty())
+            return new ResponseEntity<>("Column not found.", HttpStatus.NOT_FOUND);
+        else if (column.get().getStatus() != 'O')
+            return new ResponseEntity<>("Cannot add tiles to an archived column.", HttpStatus.BAD_REQUEST);
+        Tile tileEntity = TileFactory.getTile(title, user.get(), content, content_type, column.get());
+        tileRepository.save(tileEntity);
+        return new ResponseEntity<>("Tile created.", HttpStatus.CREATED);
     }
 
     @GetMapping(path = "/getTile/{title}")
@@ -106,8 +114,12 @@ public class TileController {
 
         Optional<Tile> tile = tileRepository.findByTitle(title);
         if (tile.isPresent()) {
-            tileRepository.delete(tile.get());
-            return new ResponseEntity<>("Tile deleted.", HttpStatus.OK);
+            Tile tileEntity = tile.get();
+            if (tileEntity.getColumn().getStatus() == 'O') {
+                tileRepository.delete(tile.get());
+                return new ResponseEntity<>("Tile deleted.", HttpStatus.OK);
+            } else
+                return new ResponseEntity<>("Cannot delete tile from an archived column.", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>("Tile not found.", HttpStatus.NOT_FOUND);
     }

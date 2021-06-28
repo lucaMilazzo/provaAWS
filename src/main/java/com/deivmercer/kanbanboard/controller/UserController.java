@@ -24,13 +24,16 @@ public class UserController {
     @PostMapping(path = "/signUp")
     public ResponseEntity<String> signUp(@RequestParam String username, @RequestParam String password) {
 
+        Optional<User> user = userRepository.findByUsername(username);
+        if (user.isPresent())
+            return new ResponseEntity<>("Username already existing.", HttpStatus.BAD_REQUEST);
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        User user = UserFactory.getUser(username, bCryptPasswordEncoder.encode(password));
-        userRepository.save(user);
+        User userEntity = UserFactory.getUser(username, bCryptPasswordEncoder.encode(password));
+        userRepository.save(userEntity);
         return new ResponseEntity<>("User created.", HttpStatus.CREATED);
     }
 
-    @PostMapping(path = "/login")
+    @PostMapping(path = "/logIn")
     public ResponseEntity<String> logIn(@RequestParam String username, @RequestParam String password) {
 
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();

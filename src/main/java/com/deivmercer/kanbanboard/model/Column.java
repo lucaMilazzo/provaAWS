@@ -12,11 +12,11 @@ public class Column {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @javax.persistence.Column(nullable = false)
+    @javax.persistence.Column(nullable = false, unique=true)
     private String title;
 
     @javax.persistence.Column(nullable = false)
-    private char status = 'O';
+    private char status = 'O'; // Ongoing / Archived
 
     @JsonIgnoreProperties("column")
     @OneToMany(mappedBy = "column")

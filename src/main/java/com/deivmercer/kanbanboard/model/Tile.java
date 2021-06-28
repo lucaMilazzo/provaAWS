@@ -11,7 +11,7 @@ public class Tile {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @javax.persistence.Column(nullable = false)
+    @javax.persistence.Column(nullable = false, unique=true)
     private String title;
 
     @ManyToOne
@@ -22,7 +22,7 @@ public class Tile {
     private String content;
 
     @javax.persistence.Column(nullable = false)
-    private char content_type;
+    private char content_type;  // Organizational / Informational
 
     @JsonIgnoreProperties("tiles")
     @ManyToOne

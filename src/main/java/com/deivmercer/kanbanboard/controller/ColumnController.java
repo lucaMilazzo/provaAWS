@@ -26,8 +26,11 @@ public class ColumnController {
     @PostMapping(path = "/addColumn")
     public ResponseEntity<String> addColumn(@RequestParam String title) {
 
-        Column column = ColumnFactory.getColumn(title);
-        columnRepository.save(column);
+        Optional<Column> column = columnRepository.findByTitle(title);
+        if (column.isPresent())
+            return new ResponseEntity<>("A column with this title already exists.", HttpStatus.BAD_REQUEST);
+        Column columnEntity = ColumnFactory.getColumn(title);
+        columnRepository.save(columnEntity);
         return new ResponseEntity<>("Column created.", HttpStatus.CREATED);
     }
 
@@ -41,7 +44,9 @@ public class ColumnController {
     public ResponseEntity<Column> getColumn(@PathVariable String title) {
 
         Optional<Column> column = columnRepository.findByTitle(title);
-        return column.map(value -> new ResponseEntity<>(value, HttpStatus.OK)).orElseGet(() -> new ResponseEntity<>(null, HttpStatus.NOT_FOUND));
+        if (column.isPresent())
+            return new ResponseEntity<>(column.get(), HttpStatus.OK);
+        return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
 
     @GetMapping(path = "/getColumnTiles/{title}")
@@ -91,7 +96,7 @@ public class ColumnController {
                 columnRepository.delete(column.get());
                 return new ResponseEntity<>("Column deleted.", HttpStatus.OK);
             }
-            return new ResponseEntity<>("Can't delete an archived column.", HttpStatus.FORBIDDEN);
+            return new ResponseEntity<>("Can't delete an archived column.", HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>("Not found.", HttpStatus.NOT_FOUND);
     }
