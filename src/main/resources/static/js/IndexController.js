@@ -1,3 +1,40 @@
+function getAllColumns() {
+
+    $.ajax({
+        type: "GET",
+        url: "/api/getAllColumns",
+        success: function(data) {
+            let cards = $("#cards");
+            let row = document.createElement("div");
+            row.className = "row";
+            cards.append(row);
+            for (let column of data) {
+                let col = document.createElement("div")
+                col.className = "col-md";
+                if (column.status === 'A')
+                    col.className += " archived";
+                row.appendChild(col);
+                let div = document.createElement("div");
+                div.style = "padding-top: 10px";
+                col.appendChild(div);
+                let deck = document.createElement("div");
+                deck.className = "container";
+                col.appendChild(deck);
+                createHeader(deck, column.title, column.status);
+                for (let tile of column.tiles) {
+                    createCard(deck, tile, column.status);
+                }
+                let option = document.createElement("option");
+                option.innerText = column.title;
+                $("#moveTileColumn").append(option);
+            }
+        },
+        error: function(err) {
+            showErrorModal(err.responseText);
+        }
+    });
+}
+
 function showErrorModal(text) {
 
     $("#errorModalBody").text(text);
@@ -54,7 +91,7 @@ function createHeader(deck, title, column_status) {
     deck.appendChild(br);
 }
 
-function createCard(deck, title, content, column_status) {
+function createCard(deck, tile, column_status) {
 
     let card = document.createElement("div");
     card.className = "card";
@@ -65,21 +102,28 @@ function createCard(deck, title, content, column_status) {
     cardBody.className = "card-body";
     card.appendChild(cardBody);
     let cardTitle = document.createElement("h5");
-    cardTitle.innerText = title;
+    cardTitle.innerText = tile.title;
     cardTitle.className = "card-title";
     cardBody.appendChild(cardTitle);
-    let cardText = document.createElement("p");
-    cardText.innerText = content;
-    cardText.className = "card-text";
-    cardBody.appendChild(cardText);
+    if (tile.tile_type === 'T') {
+        let cardContent = document.createElement("p");
+        cardContent.innerText = tile.content;
+        cardContent.className = "card-text";
+        cardBody.appendChild(cardContent);
+    } else if (tile.tile_type === 'I') {
+        let cardContent = document.createElement("img");
+        cardContent.src = tile.content;
+        cardContent.className = "mb-2";
+        cardBody.appendChild(cardContent);
+    }
     let moveTileButton = document.createElement("button");
     moveTileButton.className = "btn btn-primary mr-2 mb-2";
     moveTileButton.textContent = "Move tile";
     moveTileButton.onclick = () => {
-        $("#moveTileTitle").val(title);
+        $("#moveTileTitle").val(tile.title);
         $.ajax({
             type: "GET",
-            url: "/api/getTile/" + title,
+            url: "/api/getTile/" + tile.title,
             success: function(data) {
                 for (let option of $("#moveTileColumn").children()) {
                     if (option.innerText === data.column.title)
@@ -97,11 +141,11 @@ function createCard(deck, title, content, column_status) {
     editTileButton.className = "btn btn-info mr-2 mb-2";
     editTileButton.textContent = "Edit tile";
     editTileButton.onclick = () => {
-        $("#editTileOldTitle").val(title);
-        $("#editTileNewTitle").val(title);
+        $("#editTileOldTitle").val(tile.title);
+        $("#editTileNewTitle").val(tile.title);
         $.ajax({
             type: "GET",
-            url: "/api/getTile/" + title,
+            url: "/api/getTile/" + tile.title,
             success: function(data) {
                 $("#editTileContent").val(data.content);
                 if (data.content_type === 'O')
@@ -119,10 +163,16 @@ function createCard(deck, title, content, column_status) {
     let deleteTileButton = document.createElement("button");
     deleteTileButton.className = "btn btn-danger mr-2 mb-2";
     deleteTileButton.textContent = "Delete tile";
-    deleteTileButton.onclick = () => deleteTile(title);
+    deleteTileButton.onclick = () => deleteTile(tile.title);
     cardBody.appendChild(deleteTileButton);
     let br = document.createElement("br");
     deck.appendChild(br);
+}
+
+function signout() {
+
+    document.cookie = "username = ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+    window.location.href = "/login";
 }
 
 function addColumn() {
@@ -205,17 +255,44 @@ function deleteColumn(title) {
 function addTile() {
 
     $("#addTileModal").modal("hide");
+    let data;
     let tileTitle = $("#addTileTitle").val();
-    let tileContent = $("#addTileContent").val();
+    let tileType = $("#addTileContentRadio input:radio:checked").val();
     let tileContentType = $("#addTileContentType input:radio:checked").val();
     let tileColumn = $("#addTileColumn").val();
     let tileAuthor = $("#addTileAuthor").val();
+    let tileContent, url = "/api/", contentType, processData;
+    if (tileType === 'T') {
+        tileContent = $("#addTileText").val();
+        url += "addTextTile";
+        contentType = "application/x-www-form-urlencoded";
+        processData = true;
+        data = "title=" + tileTitle + "&content=" + tileContent + "&content_type=" + tileContentType
+            + "&column_title=" + tileColumn + "&author=" + tileAuthor + "&tile_type=" + tileType;
+    }
+    else {
+        tileContent = $("#addTileImage").prop("files")[0];
+        url += "addImageTile";
+        contentType = false;
+        processData = false;
+        data = new FormData()
+        data.append("title", tileTitle);
+        data.append("content", tileContent);
+        data.append("content_type", tileContentType);
+        data.append("column_title", tileColumn);
+        data.append("author", tileAuthor);
+        data.append("tile_type", tileType);
+    }
+    if (!tileTitle || !tileContent) {
+        showErrorModal("Please fill out the form.");
+    }
     $.ajax({
         type: "POST",
-        url: "/api/addTile",
-        data: "title=" + tileTitle + "&content=" + tileContent + "&content_type=" + tileContentType
-            + "&column_title=" + tileColumn + "&author=" + tileAuthor,
+        url: url,
+        contentType: contentType,
+        data: data,
         dataType: "html",
+        processData: processData,
         success: function() {
             window.location.href = "/";
         },

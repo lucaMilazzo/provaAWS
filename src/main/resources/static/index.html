@@ -13,10 +13,20 @@
     <body>
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <span class="navbar-brand mb-0 h1">Kanban Board</span>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-collapse collapse w-100 order-1 order-md-0 dual-collapse2" id="navbarNav">
                 <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                     <li class="nav-item active">
                         <a class="nav-link" href="#" onclick="$('#addColumnModal').modal('show')">Add column</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active mr-3">
+                        <a class="nav-link" id="welcome"></a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="/#" onclick="signout()">Sign Out</a>
                     </li>
                 </ul>
             </div>
@@ -107,13 +117,31 @@
                                 <label for="addTileTitle">Title:</label>
                                 <input type="text" class="form-control" id="addTileTitle" placeholder="Tile title">
                             </div>
-                            <div class="form-group">
-                                <label for="addTileContent">Content:</label>
-                                <input type="text" class="form-control" id="addTileContent" placeholder="Tile content">
-                            </div>
-                            <div id="addTileContentType">
+                            <div id="addTileContentRadio" style="padding-bottom: 5px">
+                                Message type:
+                                <br>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="addTileContentType" id="addTileOrganizational" value="O">
+                                    <input class="form-check-input" type="radio" name="addTileContentRadio" id="addTileContentText" value="T">
+                                    <label class="form-check-label" for="addTileContentText">Text</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentRadio" id="addTileContentImage" value="I">
+                                    <label class="form-check-label" for="addTileContentImage">Image</label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="addTileText">Text:</label>
+                                <input type="text" class="form-control" id="addTileText" placeholder="Tile content">
+                            </div>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="addTileImage">
+                                <label class="custom-file-label" for="addTileImage">Choose image</label>
+                            </div>
+                            <div id="addTileContentType" style="padding-top: 5px; padding-bottom: 5px">
+                                Content type:
+                                <br>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentType" id="addTileOrganizational" value="O" checked>
                                     <label class="form-check-label" for="addTileOrganizational">Organizational</label>
                                 </div>
                                 <div class="form-check form-check-inline">
@@ -191,7 +219,7 @@
                             </div>
                             <div id="editTileContentType">
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="editTileContentType" id="editTileOrganizational" value="O">
+                                    <input class="form-check-input" type="radio" name="editTileContentType" id="editTileOrganizational" value="O" checked>
                                     <label class="form-check-label" for="editTileOrganizational">Organizational</label>
                                 </div>
                                 <div class="form-check form-check-inline">
@@ -213,38 +241,20 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
         <script>
             $(document).ready(function() {
-                $.ajax({
-                    type: "GET",
-                    url: "/api/getAllColumns",
-                    success: function(data) {
-                        let cards = $("#cards");
-                        let row = document.createElement("div");
-                        row.className = "row";
-                        cards.append(row);
-                        for (let column of data) {
-                            let col = document.createElement("div")
-                            col.className = "col-md";
-                            if (column.status === 'A')
-                                col.className += " archived";
-                            row.appendChild(col);
-                            let div = document.createElement("div");
-                            div.style = "padding-top: 10px";
-                            col.appendChild(div);
-                            let deck = document.createElement("div");
-                            deck.className = "container";
-                            col.appendChild(deck);
-                            createHeader(deck, column.title, column.status);
-                            for (let tile of column.tiles) {
-                                createCard(deck, tile.title, tile.content, column.status);
-                            }
-                            let option = document.createElement("option");
-                            option.innerText = column.title;
-                            $("#moveTileColumn").append(option);
-                        }
-                    },
-                    error: function(err) {
-                        showErrorModal(err.responseText);
+                getAllColumns();
+                $("#welcome").text("Welcome, " + document.cookie.split("=")[1]);
+                $('#addTileContentRadio').change(function() {
+                    if ($("#addTileContentRadio input:radio:checked").val() === 'T') {
+                        $("#addTileText").prop("readonly", false);
+                        $("#addTileImage").prop("disabled", true);
+                    } else {
+                        $("#addTileText").prop("readonly", true);
+                        $("#addTileImage").prop("disabled", false);
                     }
+                });
+                $("#addTileContentText").click();
+                $('#addTileImage').change(function(e) {
+                    $(this).next(".custom-file-label").html(e.target.files[0].name);
                 });
             });
         </script>

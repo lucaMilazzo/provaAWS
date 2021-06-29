@@ -25,6 +25,9 @@ public class Tile {
     @javax.persistence.Column(nullable = false)
     private char content_type;  // Organizational / Informational
 
+    @javax.persistence.Column(nullable = false)
+    private char tile_type; // Text / Image
+
     @JsonIgnoreProperties("tiles")
     @ManyToOne
     @JoinColumn(name = "column_id", nullable = false)
@@ -72,11 +75,23 @@ public class Tile {
         this.content_type = content_type;
     }
 
+    public char getTile_type() {
+
+        return tile_type;
+    }
+
+    public void setTile_type(char tile_type) {
+
+        this.tile_type = tile_type;
+    }
+
     public Column getColumn() {
+
         return column;
     }
 
     public void setColumn(Column column) {
+
         this.column = column;
     }
 }

@@ -6,7 +6,8 @@ import com.deivmercer.kanbanboard.model.User;
 
 public class TileFactory {
 
-    public static Tile getTile(String title, User author, String content, char content_type, Column column) {
+    public static Tile getTile(String title, User author, String content, char content_type, char tile_type,
+                               Column column) {
 
         Tile tile = new Tile();
         tile.setTitle(title);
@@ -14,6 +15,7 @@ public class TileFactory {
         tile.setContent(content);
         tile.setContent_type(content_type);
         tile.setColumn(column);
+        tile.setTile_type(tile_type);
         return tile;
     }
 }
