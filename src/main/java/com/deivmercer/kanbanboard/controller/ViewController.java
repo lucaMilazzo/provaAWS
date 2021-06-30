@@ -24,4 +24,10 @@ public class ViewController {
 
         return new ModelAndView("signup.html");
     }
+
+    @GetMapping(path = "/archivedcolumns")
+    public ModelAndView archivedcolumns() {
+
+        return new ModelAndView("archivedColumns.html");
+    }
 }

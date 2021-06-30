@@ -1,8 +1,8 @@
-function getAllColumns() {
+function getOngoingColumns() {
 
     $.ajax({
         type: "GET",
-        url: "/api/getAllColumns",
+        url: "/api/getOngoingColumns",
         success: function(data) {
             let cards = $("#cards");
             let row = document.createElement("div");
@@ -22,7 +22,7 @@ function getAllColumns() {
                 col.appendChild(deck);
                 createHeader(deck, column.title, column.status);
                 for (let tile of column.tiles) {
-                    createCard(deck, tile, column.status);
+                    createCard(deck, tile);
                 }
                 let option = document.createElement("option");
                 option.innerText = column.title;
@@ -72,14 +72,8 @@ function createHeader(deck, title, column_status) {
     }
     cardBody.appendChild(editColumnButton);
     let archiveColumnButton = document.createElement("button");
-    if (column_status === 'A') {
-        card.className = " text-white";
-        archiveColumnButton.className = "btn btn-success mr-2 mb-2";
-        archiveColumnButton.textContent = "Unarchive column";
-    } else {
-        archiveColumnButton.className = "btn btn-secondary mr-2 mb-2";
-        archiveColumnButton.textContent = "Archive column";
-    }
+    archiveColumnButton.className = "btn btn-secondary mr-2 mb-2";
+    archiveColumnButton.textContent = "Archive column";
     archiveColumnButton.onclick = () => changeColumnStatus(title);
     cardBody.appendChild(archiveColumnButton);
     let deleteColumnButton = document.createElement("button");
@@ -91,12 +85,10 @@ function createHeader(deck, title, column_status) {
     deck.appendChild(br);
 }
 
-function createCard(deck, tile, column_status) {
+function createCard(deck, tile) {
 
     let card = document.createElement("div");
     card.className = "card text-white";
-    if (column_status === 'A')
-        card.className = " text-white bg-secondary";
     deck.appendChild(card);
     let header = document.createElement("div");
     header.className = "card-header";

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,10 +38,24 @@ public class ColumnController {
         return new ResponseEntity<>("Column created.", HttpStatus.CREATED);
     }
 
-    @GetMapping(path = "/getAllColumns")
-    public Iterable<Column> getAllColumns() {
+    @GetMapping(path = "/getOngoingColumns")
+    public Iterable<Column> getOngoingColumns() {
 
-        return columnRepository.findAll();
+        List<Column> columns = new ArrayList<>();
+        for (Column column : columnRepository.findAll())
+            if (column.getStatus() == 'O')
+                columns.add(column);
+        return columns;
+    }
+
+    @GetMapping(path = "/getArchivedColumns")
+    public Iterable<Column> getArchivedColumns() {
+
+        List<Column> columns = new ArrayList<>();
+        for (Column column : columnRepository.findAll())
+            if (column.getStatus() == 'A')
+                columns.add(column);
+        return columns;
     }
 
     @GetMapping(path = "/getColumn/{title}")
