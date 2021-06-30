@@ -38,17 +38,11 @@ public class TileController {
     @Autowired
     private ColumnRepository columnRepository;
 
-    @Autowired
-    private HttpServletRequest request;
-
     @PostMapping(path = "/addTextTile")
     public ResponseEntity<String> addTextTile(@RequestParam String title, @RequestParam String author,
-                                          @RequestParam String content, @RequestParam char content_type,
-                                          @RequestParam String column_title) {
+                                              @RequestParam String content, @RequestParam char content_type,
+                                              @RequestParam String column_title) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(title);
-        if (tile.isPresent())
-            return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
         Optional<User> user = userRepository.findByUsername(author);
         if (user.isEmpty())
             return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
@@ -63,14 +57,10 @@ public class TileController {
     }
 
     @PostMapping(path = "/addImageTile")
-    public ResponseEntity<String> addImageTile(
-                                           @RequestParam String title, @RequestParam String author,
-                                           @RequestParam MultipartFile content, @RequestParam char content_type,
-                                           @RequestParam String column_title) {
+    public ResponseEntity<String> addImageTile(@RequestParam String title, @RequestParam String author,
+                                               @RequestParam MultipartFile content, @RequestParam char content_type,
+                                               @RequestParam String column_title) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(title);
-        if (tile.isPresent())
-            return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
         Optional<User> user = userRepository.findByUsername(author);
         if (user.isEmpty())
             return new ResponseEntity<>("User not found.", HttpStatus.NOT_FOUND);
@@ -118,19 +108,19 @@ public class TileController {
             throw new IOException("Cannot create file.");
     }
 
-    @GetMapping(path = "/getTile/{title}")
-    public ResponseEntity<Tile> getTile(@PathVariable String title) {
+    @GetMapping(path = "/getTile/{tile_id}")
+    public ResponseEntity<Tile> getTile(@PathVariable int tile_id) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(title);
+        Optional<Tile> tile = tileRepository.findById(tile_id);
         if (tile.isPresent())
             return new ResponseEntity<>(tile.get(), HttpStatus.OK);
         return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
     }
 
     @PatchMapping(path = "/moveTile")
-    public ResponseEntity<String> moveTile(@RequestParam String tile_title, @RequestParam String column_title) {
+    public ResponseEntity<String> moveTile(@RequestParam int tile_id, @RequestParam String column_title) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(tile_title);
+        Optional<Tile> tile = tileRepository.findById(tile_id);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
             if (tileEntity.getColumn().getStatus() == 'A')
@@ -147,21 +137,17 @@ public class TileController {
     }
 
     @PatchMapping(path = "/editTextTile")
-    public ResponseEntity<String> editTextTile(@RequestParam String old_title,
+    public ResponseEntity<String> editTextTile(@RequestParam int tile_id,
                                                @RequestParam(required = false) String new_title,
                                                @RequestParam(required = false) String content) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(old_title);
+        Optional<Tile> tile = tileRepository.findById(tile_id);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
             if (tileEntity.getColumn().getStatus() == 'A')
                 return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
-            if (new_title != null && !new_title.equals(old_title)) {
-                Optional<Tile> tile2 = tileRepository.findByTitle(new_title);
-                if (tile2.isPresent())
-                    return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
+            if (new_title != null)
                 tileEntity.setTitle(new_title);
-            }
             String previousImage = null;
             if (content != null) {
                 if (tileEntity.getTile_type() == 'I')
@@ -183,21 +169,17 @@ public class TileController {
     }
 
     @PatchMapping(path = "/editImageTile")
-    public ResponseEntity<String> editImageTile(@RequestParam String old_title,
+    public ResponseEntity<String> editImageTile(@RequestParam int tile_id,
                                                 @RequestParam(required = false) String new_title,
                                                 @RequestParam(required = false) MultipartFile content) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(old_title);
+        Optional<Tile> tile = tileRepository.findById(tile_id);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
             if (tileEntity.getColumn().getStatus() == 'A')
                 return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
-            if (new_title != null && !new_title.equals(old_title)) {
-                Optional<Tile> tile2 = tileRepository.findByTitle(new_title);
-                if (tile2.isPresent())
-                    return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
+            if (new_title != null)
                 tileEntity.setTitle(new_title);
-            }
             String previousImage = null;
             if (content != null) {
                 try {
@@ -225,9 +207,9 @@ public class TileController {
     }
 
     @DeleteMapping(path = "/deleteTile")
-    public ResponseEntity<String> deleteTile(@RequestParam String title) {
+    public ResponseEntity<String> deleteTile(@RequestParam int tile_id) {
 
-        Optional<Tile> tile = tileRepository.findByTitle(title);
+        Optional<Tile> tile = tileRepository.findById(tile_id);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
             if (tileEntity.getColumn().getStatus() == 'O') {

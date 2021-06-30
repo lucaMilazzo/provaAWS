@@ -11,7 +11,7 @@ public class Tile {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Integer id;
 
-    @javax.persistence.Column(nullable = false, unique=true)
+    @javax.persistence.Column(nullable = false)
     private String title;
 
     @JsonIgnoreProperties("password")
@@ -19,7 +19,7 @@ public class Tile {
     @JoinColumn(name = "user_id", nullable = false)
     private User author;
 
-    @javax.persistence.Column(nullable = false)
+    @javax.persistence.Column(nullable = false, length = 4096)
     private String content;
 
     @javax.persistence.Column(nullable = false)
@@ -32,6 +32,10 @@ public class Tile {
     @ManyToOne
     @JoinColumn(name = "column_id", nullable = false)
     private Column column;
+
+    public Integer getId() {
+        return id;
+    }
 
     public String getTitle() {
 

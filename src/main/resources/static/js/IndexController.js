@@ -11,8 +11,6 @@ function getOngoingColumns() {
             for (let column of data) {
                 let col = document.createElement("div")
                 col.className = "col-md";
-                if (column.status === 'A')
-                    col.className += " archived";
                 row.appendChild(col);
                 let div = document.createElement("div");
                 div.style = "padding-top: 10px";
@@ -20,7 +18,7 @@ function getOngoingColumns() {
                 let deck = document.createElement("div");
                 deck.className = "container";
                 col.appendChild(deck);
-                createHeader(deck, column.title, column.status);
+                createHeader(deck, column.title);
                 for (let tile of column.tiles) {
                     createCard(deck, tile);
                 }
@@ -41,7 +39,7 @@ function showErrorModal(text) {
     $("#errorModal").modal("show")
 }
 
-function createHeader(deck, title, column_status) {
+function createHeader(deck, title) {
 
     let card = document.createElement("div");
     card.className = "card border-0";
@@ -131,7 +129,7 @@ function createCard(deck, tile) {
         $("#moveTileTitle").val(tile.title);
         $.ajax({
             type: "GET",
-            url: "/api/getTile/" + tile.title,
+            url: "/api/getTile/" + tile.id,
             success: function(data) {
                 for (let option of $("#moveTileColumn").children()) {
                     if (option.innerText === data.column.title)
@@ -140,7 +138,7 @@ function createCard(deck, tile) {
                 $("#moveTileModal").modal("show");
             },
             error: function(err) {
-                showModal(err.responseText);
+                showErrorModal(err.responseText);
             }
         });
     }
@@ -149,11 +147,15 @@ function createCard(deck, tile) {
     editTileButton.className = "btn btn-info mr-2 mb-2";
     editTileButton.textContent = "Edit tile";
     editTileButton.onclick = () => {
+        $("#editTileId").val(tile.id);
         $("#editTileOldTitle").val(tile.title);
         $("#editTileNewTitle").val(tile.title);
+        if (tile.tile_type === 'T') {
+            $("#editTileText").val(tile.content);
+        }
         $.ajax({
             type: "GET",
-            url: "/api/getTile/" + tile.title,
+            url: "/api/getTile/" + tile.id,
             success: function(data) {
                 $("#editTileContent").val(data.content);
                 if (data.content_type === 'O')
@@ -163,7 +165,7 @@ function createCard(deck, tile) {
                 $("#editTileModal").modal("show");
             },
             error: function(err) {
-                showModal(err.responseText);
+                showErrorModal(err.responseText);
             }
         });
     }
@@ -171,7 +173,7 @@ function createCard(deck, tile) {
     let deleteTileButton = document.createElement("button");
     deleteTileButton.className = "btn btn-danger mr-2 mb-2";
     deleteTileButton.textContent = "Delete tile";
-    deleteTileButton.onclick = () => deleteTile(tile.title);
+    deleteTileButton.onclick = () => deleteTile(tile.id);
     cardBody.appendChild(deleteTileButton);
     let br = document.createElement("br");
     deck.appendChild(br);
@@ -344,7 +346,7 @@ function editTile() {
 
     $("#editTileModal").modal("hide");
     let data;
-    let tileOldTitle = $("#editTileOldTitle").val();
+    let tileId = $("#editTileId").val();
     let tileNewTitle = $("#editTileNewTitle").val();
     let tileType = $("#editTileContentRadio input:radio:checked").val();
     let tileContent, url = "/api/", contentType, processData;
@@ -353,7 +355,7 @@ function editTile() {
         url += "editTextTile";
         contentType = "application/x-www-form-urlencoded";
         processData = true;
-        data = "old_title=" + tileOldTitle + "&new_title=" + tileNewTitle + "&content=" + tileContent;
+        data = "tile_id=" + tileId + "&new_title=" + tileNewTitle + "&content=" + tileContent;
     }
     else {
         tileContent = $("#editTileImage").prop("files")[0];
@@ -361,7 +363,7 @@ function editTile() {
         contentType = false;
         processData = false;
         data = new FormData()
-        data.append("old_title", tileOldTitle);
+        data.append("tile_id", tileId);
         data.append("new_title", tileNewTitle);
         data.append("content", tileContent);
     }
@@ -386,7 +388,7 @@ function deleteTile(title) {
     $.ajax({
         type: "DELETE",
         url: "/api/deleteTile",
-        data: "title=" + title,
+        data: "tile_id=" + title,
         dataType: "html",
         success: function() {
             window.location.href = "/";
