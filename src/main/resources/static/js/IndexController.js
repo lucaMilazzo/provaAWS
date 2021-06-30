@@ -94,10 +94,20 @@ function createHeader(deck, title, column_status) {
 function createCard(deck, tile, column_status) {
 
     let card = document.createElement("div");
-    card.className = "card";
+    card.className = "card text-white";
     if (column_status === 'A')
         card.className = " text-white bg-secondary";
     deck.appendChild(card);
+    let header = document.createElement("div");
+    header.className = "card-header";
+    if (tile.content_type === 'I') {
+        card.className += " bg-warning";
+        header.innerText = "Information";
+    } else if (tile.content_type === 'O') {
+        card.className += " bg-success";
+        header.innerText = "Organization";
+    }
+    card.appendChild(header);
     let cardBody = document.createElement("div");
     cardBody.className = "card-body";
     card.appendChild(cardBody);
@@ -105,6 +115,10 @@ function createCard(deck, tile, column_status) {
     cardTitle.innerText = tile.title;
     cardTitle.className = "card-title";
     cardBody.appendChild(cardTitle);
+    let cardAuthor = document.createElement("p")
+    cardAuthor.className = "card-text";
+    cardAuthor.innerText = "Author: " + tile.author.username;
+    cardBody.appendChild(cardAuthor);
     if (tile.tile_type === 'T') {
         let cardContent = document.createElement("p");
         cardContent.innerText = tile.content;
