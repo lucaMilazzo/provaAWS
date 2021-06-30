@@ -23,14 +23,17 @@ public class Column {
     private List<Tile> tiles;
 
     public String getTitle() {
+
         return title;
     }
 
     public void setTitle(String title) {
+
         this.title = title;
     }
 
     public char getStatus() {
+
         return status;
     }
 
@@ -43,6 +46,7 @@ public class Column {
     }
 
     public List<Tile> getTiles() {
+
         return tiles;
     }
 }
