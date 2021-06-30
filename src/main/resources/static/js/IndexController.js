@@ -303,6 +303,7 @@ function addTile() {
     }
     if (!tileTitle || !tileContent) {
         showErrorModal("Please fill out the form.");
+        return;
     }
     $.ajax({
         type: "POST",

@@ -90,10 +90,13 @@ public class ColumnController {
     }
 
     @PatchMapping(path = "/editColumn")
-    public ResponseEntity<String>  editColumn(@RequestParam String old_title, @RequestParam String new_title) {
+    public ResponseEntity<String> editColumn(@RequestParam String old_title, @RequestParam String new_title) {
 
         Optional<Column> column = columnRepository.findByTitle(old_title);
         if (column.isPresent()) {
+            Optional<Column> columnNewTitle = columnRepository.findByTitle(new_title);
+            if (columnNewTitle.isPresent())
+                return new ResponseEntity<>("A column with this title already exists.", HttpStatus.BAD_REQUEST);
             Column columnEntity = column.get();
             columnEntity.setTitle(new_title);
             columnRepository.save(columnEntity);
