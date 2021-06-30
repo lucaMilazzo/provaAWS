@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -91,8 +94,16 @@ public class ColumnController {
         if (column.isPresent()) {
             Column columnEntity = column.get();
             if (columnEntity.getStatus() == 'O') {
-                for (Tile tile : columnEntity.getTiles())
+                for (Tile tile : columnEntity.getTiles()) {
+                    if (tile.getTile_type() == 'I') {
+                        try {
+                            Files.delete(Paths.get(tile.getContent()));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     tileRepository.delete(tile);
+                }
                 columnRepository.delete(column.get());
                 return new ResponseEntity<>("Column deleted.", HttpStatus.OK);
             }
