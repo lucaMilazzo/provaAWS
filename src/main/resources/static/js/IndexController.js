@@ -346,15 +346,13 @@ function editTile() {
     let tileOldTitle = $("#editTileOldTitle").val();
     let tileNewTitle = $("#editTileNewTitle").val();
     let tileType = $("#editTileContentRadio input:radio:checked").val();
-    let tileContentType = $("#editTileContentType input:radio:checked").val();
     let tileContent, url = "/api/", contentType, processData;
     if (tileType === 'T') {
         tileContent = $("#editTileText").val();
         url += "editTextTile";
         contentType = "application/x-www-form-urlencoded";
         processData = true;
-        data = "old_title=" + tileOldTitle + "&new_title=" + tileNewTitle + "&content=" + tileContent
-             + "&content_type=" + tileContentType;
+        data = "old_title=" + tileOldTitle + "&new_title=" + tileNewTitle + "&content=" + tileContent;
     }
     else {
         tileContent = $("#editTileImage").prop("files")[0];
@@ -365,7 +363,6 @@ function editTile() {
         data.append("old_title", tileOldTitle);
         data.append("new_title", tileNewTitle);
         data.append("content", tileContent);
-        data.append("content_type", tileContentType);
     }
     $.ajax({
         type: "PATCH",

@@ -149,8 +149,7 @@ public class TileController {
     @PatchMapping(path = "/editTextTile")
     public ResponseEntity<String> editTextTile(@RequestParam String old_title,
                                                @RequestParam(required = false) String new_title,
-                                               @RequestParam(required = false) String content,
-                                               @RequestParam(required = false) Character content_type) {
+                                               @RequestParam(required = false) String content) {
 
         Optional<Tile> tile = tileRepository.findByTitle(old_title);
         if (tile.isPresent()) {
@@ -170,14 +169,6 @@ public class TileController {
                 tileEntity.setContent(content);
                 tileEntity.setTile_type('T');
             }
-            if (content_type != null) {
-                try {
-                    tileEntity.setContent_type(content_type);
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                    return new ResponseEntity<>("Wrong content_type.", HttpStatus.BAD_REQUEST);
-                }
-            }
             tileRepository.save(tileEntity);
             if (previousImage != null) {
                 try {
@@ -194,8 +185,7 @@ public class TileController {
     @PatchMapping(path = "/editImageTile")
     public ResponseEntity<String> editImageTile(@RequestParam String old_title,
                                                 @RequestParam(required = false) String new_title,
-                                                @RequestParam(required = false) MultipartFile content,
-                                                @RequestParam(required = false) Character content_type) {
+                                                @RequestParam(required = false) MultipartFile content) {
 
         Optional<Tile> tile = tileRepository.findByTitle(old_title);
         if (tile.isPresent()) {
@@ -219,14 +209,6 @@ public class TileController {
                 } catch (IOException e) {
                     e.printStackTrace();
                     return new ResponseEntity<>("Cannot save image.", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }
-            if (content_type != null) {
-                try {
-                    tileEntity.setContent_type(content_type);
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                    return new ResponseEntity<>("Wrong content_type.", HttpStatus.BAD_REQUEST);
                 }
             }
             tileRepository.save(tileEntity);
