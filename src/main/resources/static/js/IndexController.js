@@ -64,7 +64,7 @@ function createHeader(deck, title, column_status) {
     cardBody.appendChild(addTileButton);
     let editColumnButton = document.createElement("button");
     editColumnButton.className = "btn btn-info mr-2 mb-2";
-    editColumnButton.textContent = "Edit tile";
+    editColumnButton.textContent = "Edit column";
     editColumnButton.onclick = () => {
         $("#editColumnOldTitle").val(title);
         $("#editColumnNewTitle").val(title);
@@ -73,7 +73,7 @@ function createHeader(deck, title, column_status) {
     cardBody.appendChild(editColumnButton);
     let archiveColumnButton = document.createElement("button");
     if (column_status === 'A') {
-        card.className = " text-white bg-secondary";
+        card.className = " text-white";
         archiveColumnButton.className = "btn btn-success mr-2 mb-2";
         archiveColumnButton.textContent = "Unarchive column";
     } else {
@@ -115,6 +115,8 @@ function createCard(deck, tile, column_status) {
         cardContent.src = tile.content;
         cardContent.className = "mb-2";
         cardBody.appendChild(cardContent);
+        let br = document.createElement("br");
+        cardBody.appendChild(br);
     }
     let moveTileButton = document.createElement("button");
     moveTileButton.className = "btn btn-primary mr-2 mb-2";
@@ -173,6 +175,16 @@ function signout() {
 
     document.cookie = "username = ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
     window.location.href = "/login";
+}
+
+function toggleTileContent(radio, text, image) {
+    if ($(radio).val() === 'T') {
+        $(text).prop("readonly", false);
+        $(image).prop("disabled", true);
+    } else {
+        $(text).prop("readonly", true);
+        $(image).prop("disabled", false);
+    }
 }
 
 function addColumn() {
@@ -324,16 +336,38 @@ function moveTile() {
 function editTile() {
 
     $("#editTileModal").modal("hide");
+    let data;
     let tileOldTitle = $("#editTileOldTitle").val();
     let tileNewTitle = $("#editTileNewTitle").val();
-    let tileContent = $("#editTileContent").val();
+    let tileType = $("#editTileContentRadio input:radio:checked").val();
     let tileContentType = $("#editTileContentType input:radio:checked").val();
+    let tileContent, url = "/api/", contentType, processData;
+    if (tileType === 'T') {
+        tileContent = $("#editTileText").val();
+        url += "editTextTile";
+        contentType = "application/x-www-form-urlencoded";
+        processData = true;
+        data = "old_title=" + tileOldTitle + "&new_title=" + tileNewTitle + "&content=" + tileContent
+             + "&content_type=" + tileContentType;
+    }
+    else {
+        tileContent = $("#editTileImage").prop("files")[0];
+        url += "editImageTile";
+        contentType = false;
+        processData = false;
+        data = new FormData()
+        data.append("old_title", tileOldTitle);
+        data.append("new_title", tileNewTitle);
+        data.append("content", tileContent);
+        data.append("content_type", tileContentType);
+    }
     $.ajax({
         type: "PATCH",
-        url: "/api/editTile",
-        data: "old_title=" + tileOldTitle + "&new_title=" + tileNewTitle + "&content=" + tileContent
-            + "&content_type=" + tileContentType,
+        url: url,
+        contentType: contentType,
+        data: data,
         dataType: "html",
+        processData: processData,
         success: function() {
             window.location.href = "/";
         },

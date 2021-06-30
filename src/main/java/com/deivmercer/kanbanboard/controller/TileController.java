@@ -79,37 +79,43 @@ public class TileController {
             return new ResponseEntity<>("Column not found.", HttpStatus.NOT_FOUND);
         else if (column.get().getStatus() != 'O')
             return new ResponseEntity<>("Cannot add tiles to an archived column.", HttpStatus.BAD_REQUEST);
-        Path filePath = Paths.get("user_generated_content");
         try {
-            if (Files.notExists(filePath))
-                Files.createDirectory(filePath);
-            String extension = content.getOriginalFilename().split("\\.")[1];
-            File file = new File(filePath + "/" + new Date().getTime() +  "." + extension);
-            if (file.createNewFile()) {
-                BufferedImage bufferedImage = ImageIO.read(content.getInputStream());
-                int width = bufferedImage.getWidth(), height = bufferedImage.getHeight();
-                if (width > 900) {
-                    height = (height * 900) / width;
-                    width = 900;
-                }
-                if (height > 900) {
-                    width = (width * 900) / height;
-                    height = 900;
-                }
-                Image image = bufferedImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-                bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-                bufferedImage.getGraphics().drawImage(image, 0, 0, null);
-                ImageIO.write(bufferedImage, extension, file);
-                Tile tileEntity = TileFactory.getTile(title, user.get(), file.getPath(), content_type, 'I',
-                                                      column.get());
-                tileRepository.save(tileEntity);
-                return new ResponseEntity<>("Tile created.", HttpStatus.CREATED);
-            } else
-                throw new IOException("Cannot create file.");
+            String filePath = saveImage(content);
+            Tile tileEntity = TileFactory.getTile(title, user.get(), filePath, content_type, 'I',
+                    column.get());
+            tileRepository.save(tileEntity);
+            return new ResponseEntity<>("Tile created.", HttpStatus.CREATED);
         } catch (IOException e) {
             e.printStackTrace();
             return new ResponseEntity<>("Cannot save image.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public String saveImage(MultipartFile content) throws IOException {
+
+        Path filePath = Paths.get("user_generated_content");
+        if (Files.notExists(filePath))
+            Files.createDirectory(filePath);
+        String extension = content.getOriginalFilename().split("\\.")[1];
+        File file = new File(filePath + "/" + new Date().getTime() +  "." + extension);
+        if (file.createNewFile()) {
+            BufferedImage bufferedImage = ImageIO.read(content.getInputStream());
+            int width = bufferedImage.getWidth(), height = bufferedImage.getHeight();
+            if (width > 900) {
+                height = (height * 900) / width;
+                width = 900;
+            }
+            if (height > 900) {
+                width = (width * 900) / height;
+                height = 900;
+            }
+            Image image = bufferedImage.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+            bufferedImage.getGraphics().drawImage(image, 0, 0, null);
+            ImageIO.write(bufferedImage, extension, file);
+            return file.getPath();
+        } else
+            throw new IOException("Cannot create file.");
     }
 
     @GetMapping(path = "/getTile/{title}")
@@ -140,25 +146,30 @@ public class TileController {
         return new ResponseEntity<>("Tile not found.", HttpStatus.NOT_FOUND);
     }
 
-    @PatchMapping(path = "/editTile")
-    public ResponseEntity<String> editTile(@RequestParam String old_title,
-                                           @RequestParam(required = false) String new_title,
-                                           @RequestParam(required = false) String content,
-                                           @RequestParam(required = false) Character content_type) {
+    @PatchMapping(path = "/editTextTile")
+    public ResponseEntity<String> editTextTile(@RequestParam String old_title,
+                                               @RequestParam(required = false) String new_title,
+                                               @RequestParam(required = false) String content,
+                                               @RequestParam(required = false) Character content_type) {
 
         Optional<Tile> tile = tileRepository.findByTitle(old_title);
         if (tile.isPresent()) {
             Tile tileEntity = tile.get();
             if (tileEntity.getColumn().getStatus() == 'A')
                 return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
-            if (new_title != null) {
+            if (new_title != null && !new_title.equals(old_title)) {
                 Optional<Tile> tile2 = tileRepository.findByTitle(new_title);
                 if (tile2.isPresent())
                     return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
                 tileEntity.setTitle(new_title);
             }
-            if (content != null)
+            String previousImage = null;
+            if (content != null) {
+                if (tileEntity.getTile_type() == 'I')
+                    previousImage = tileEntity.getContent();
                 tileEntity.setContent(content);
+                tileEntity.setTile_type('T');
+            }
             if (content_type != null) {
                 try {
                     tileEntity.setContent_type(content_type);
@@ -168,6 +179,64 @@ public class TileController {
                 }
             }
             tileRepository.save(tileEntity);
+            if (previousImage != null) {
+                try {
+                    Files.delete(Paths.get(previousImage));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return new ResponseEntity<>("Tile modified.", HttpStatus.OK);
+        }
+        return new ResponseEntity<>("Tile not found.", HttpStatus.NOT_FOUND);
+    }
+
+    @PatchMapping(path = "/editImageTile")
+    public ResponseEntity<String> editImageTile(@RequestParam String old_title,
+                                                @RequestParam(required = false) String new_title,
+                                                @RequestParam(required = false) MultipartFile content,
+                                                @RequestParam(required = false) Character content_type) {
+
+        Optional<Tile> tile = tileRepository.findByTitle(old_title);
+        if (tile.isPresent()) {
+            Tile tileEntity = tile.get();
+            if (tileEntity.getColumn().getStatus() == 'A')
+                return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
+            if (new_title != null && !new_title.equals(old_title)) {
+                Optional<Tile> tile2 = tileRepository.findByTitle(new_title);
+                if (tile2.isPresent())
+                    return new ResponseEntity<>("A tile with this title already exists.", HttpStatus.BAD_REQUEST);
+                tileEntity.setTitle(new_title);
+            }
+            String previousImage = null;
+            if (content != null) {
+                try {
+                    String filePath = saveImage(content);
+                    if (tileEntity.getTile_type() == 'I')
+                        previousImage = tileEntity.getContent();
+                    tileEntity.setContent(filePath);
+                    tileEntity.setTile_type('I');
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return new ResponseEntity<>("Cannot save image.", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+            if (content_type != null) {
+                try {
+                    tileEntity.setContent_type(content_type);
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                    return new ResponseEntity<>("Wrong content_type.", HttpStatus.BAD_REQUEST);
+                }
+            }
+            tileRepository.save(tileEntity);
+            if (previousImage != null) {
+                try {
+                    Files.delete(Paths.get(previousImage));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             return new ResponseEntity<>("Tile modified.", HttpStatus.OK);
         }
         return new ResponseEntity<>("Tile not found.", HttpStatus.NOT_FOUND);

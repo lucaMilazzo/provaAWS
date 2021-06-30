@@ -82,6 +82,8 @@ public class Tile {
 
     public void setTile_type(char tile_type) {
 
+        if (tile_type != 'T' && tile_type != 'I')
+            throw new IllegalArgumentException("Content type " + content_type + " is invalid.");
         this.tile_type = tile_type;
     }
 

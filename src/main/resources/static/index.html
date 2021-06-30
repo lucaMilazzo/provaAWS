@@ -213,11 +213,29 @@
                                 <label for="editTileNewTitle">New title:</label>
                                 <input type="text" class="form-control" id="editTileNewTitle" placeholder="Tile title">
                             </div>
-                            <div class="form-group">
-                                <label for="editTileContent">Content:</label>
-                                <input type="text" class="form-control" id="editTileContent" placeholder="Tile content">
+                            <div id="editTileContentRadio" style="padding-bottom: 5px">
+                                Message type:
+                                <br>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentRadio" id="editTileContentText" value="T">
+                                    <label class="form-check-label" for="editTileContentText">Text</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="addTileContentRadio" id="editTileContentImage" value="I">
+                                    <label class="form-check-label" for="editTileContentImage">Image</label>
+                                </div>
                             </div>
-                            <div id="editTileContentType">
+                            <div class="form-group">
+                                <label for="editTileText">Content:</label>
+                                <input type="text" class="form-control" id="editTileText" placeholder="Tile content">
+                            </div>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="editTileImage">
+                                <label class="custom-file-label" for="editTileImage">Choose image</label>
+                            </div>
+                            <div id="editTileContentType" style="padding-top: 5px">
+                                Content type:
+                                <br>
                                 <div class="form-check form-check-inline">
                                     <input class="form-check-input" type="radio" name="editTileContentType" id="editTileOrganizational" value="O" checked>
                                     <label class="form-check-label" for="editTileOrganizational">Organizational</label>
@@ -243,17 +261,18 @@
             $(document).ready(function() {
                 getAllColumns();
                 $("#welcome").text("Welcome, " + document.cookie.split("=")[1]);
-                $('#addTileContentRadio').change(function() {
-                    if ($("#addTileContentRadio input:radio:checked").val() === 'T') {
-                        $("#addTileText").prop("readonly", false);
-                        $("#addTileImage").prop("disabled", true);
-                    } else {
-                        $("#addTileText").prop("readonly", true);
-                        $("#addTileImage").prop("disabled", false);
-                    }
+                $("#addTileContentRadio").change(function() {
+                    toggleTileContent("#addTileContentRadio input:radio:checked", "#addTileText", "#addTileImage");
+                });
+                $("#editTileContentRadio").change(function() {
+                    toggleTileContent("#editTileContentRadio input:radio:checked", "#editTileText", "#editTileImage");
                 });
                 $("#addTileContentText").click();
-                $('#addTileImage').change(function(e) {
+                $("#editTileContentText").click();
+                $("#addTileImage").change(function(e) {
+                    $(this).next(".custom-file-label").html(e.target.files[ 0].name);
+                });
+                $("#editTileImage").change(function(e) {
                     $(this).next(".custom-file-label").html(e.target.files[0].name);
                 });
             });
