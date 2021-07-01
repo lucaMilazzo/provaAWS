@@ -127,6 +127,7 @@ function createCard(deck, tile) {
     moveTileButton.textContent = "Move tile";
     moveTileButton.onclick = () => {
         $("#moveTileTitle").val(tile.title);
+        $("#moveTileId").val(tile.id);
         $.ajax({
             type: "GET",
             url: "/api/getTile/" + tile.id,
@@ -334,12 +335,12 @@ function addTile() {
 function moveTile() {
 
     $("#moveTileModal").modal("hide");
-    let tileTitle = $("#moveTileTitle").val();
+    let tileId = $("#moveTileId").val();
     let tileColumnTitle = $("#moveTileColumn").val();
     $.ajax({
         type: "PATCH",
         url: "/api/moveTile",
-        data: "tile_title=" + tileTitle + "&column_title=" + tileColumnTitle,
+        data: "tile_id=" + tileId + "&column_title=" + tileColumnTitle,
         dataType: "html",
         success: function() {
             window.location.href = "/";
