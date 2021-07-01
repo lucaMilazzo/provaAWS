@@ -1,5 +1,6 @@
 package com.deivmercer.kanbanboard.controller;
 
+import com.deivmercer.kanbanboard.exception.UnsupportedFormatException;
 import com.deivmercer.kanbanboard.factory.TileFactory;
 import com.deivmercer.kanbanboard.model.Column;
 import com.deivmercer.kanbanboard.model.Tile;
@@ -14,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
-import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -71,8 +71,6 @@ public class TileController {
             return new ResponseEntity<>("Cannot add tiles to an archived column.", HttpStatus.BAD_REQUEST);
         try {
             String filePath = saveImage(content);
-            if (filePath.equals("-1"))
-                return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
             Tile tileEntity = TileFactory.getTile(title, user.get(), filePath, content_type, 'I',
                     column.get());
             tileRepository.save(tileEntity);
@@ -80,10 +78,13 @@ public class TileController {
         } catch (IOException e) {
             e.printStackTrace();
             return new ResponseEntity<>("Cannot save image.", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (UnsupportedFormatException e) {
+            e.printStackTrace();
+            return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
         }
     }
 
-    public String saveImage(MultipartFile content) throws IOException {
+    public String saveImage(MultipartFile content) throws IOException, UnsupportedFormatException {
 
         Path filePath = Paths.get("user_generated_content");
         if (Files.notExists(filePath))
@@ -91,7 +92,7 @@ public class TileController {
         String extension = content.getOriginalFilename().split("\\.")[1].toLowerCase();
         if (!extension.equals("png") && !extension.equals("jpg") && !extension.equals("jpeg")
                 && !extension.equals("bmp") && !extension.equals("gif") && !extension.equals("tif"))
-            return "-1";
+            throw new UnsupportedFormatException(extension + " is not supported.");
         if (!extension.equals("png") && !extension.equals("gif"))
             extension = "png";
         File file = new File(filePath + "/" + new Date().getTime() +  "." + extension);
@@ -187,12 +188,10 @@ public class TileController {
                 return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
             if (new_title != null)
                 tileEntity.setTitle(new_title);
-            String previousImage = null, filePath = "";
+            String previousImage = null;
             if (content != null) {
                 try {
-                    filePath = saveImage(content);
-                    if (filePath.equals("-1"))
-                        return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
+                    String filePath = saveImage(content);
                     if (tileEntity.getTile_type() == 'I')
                         previousImage = tileEntity.getContent();
                     tileEntity.setContent(filePath);
@@ -200,6 +199,9 @@ public class TileController {
                 } catch (IOException e) {
                     e.printStackTrace();
                     return new ResponseEntity<>("Cannot save image.", HttpStatus.INTERNAL_SERVER_ERROR);
+                } catch (UnsupportedFormatException e) {
+                    e.printStackTrace();
+                    return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
                 }
             }
             tileRepository.save(tileEntity);
