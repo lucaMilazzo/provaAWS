@@ -307,6 +307,14 @@ function addTile() {
         showErrorModal("Please fill out the form.");
         return;
     }
+    if (tileType === 'I') {
+        let extension = tileContent.name.split(".")[1];
+        if (extension !== "png" && extension  !== "jpg" && extension  !== "jpeg" && extension !== "bmp"
+            && extension !== "gif" && extension !== "tif") {
+            showErrorModal("Unsupported file format.");
+            return;
+        }
+    }
     $.ajax({
         type: "POST",
         url: url,
@@ -366,6 +374,14 @@ function editTile() {
         data.append("tile_id", tileId);
         data.append("new_title", tileNewTitle);
         data.append("content", tileContent);
+    }
+    if (tileType === 'I' && tileContent) {
+        let extension = tileContent.name.split(".")[1];
+        if (extension !== "png" && extension  !== "jpg" && extension  !== "jpeg" && extension !== "bmp"
+            && extension !== "gif" && extension !== "tif") {
+            showErrorModal("Unsupported file format.");
+            return;
+        }
     }
     $.ajax({
         type: "PATCH",

@@ -71,6 +71,8 @@ public class TileController {
             return new ResponseEntity<>("Cannot add tiles to an archived column.", HttpStatus.BAD_REQUEST);
         try {
             String filePath = saveImage(content);
+            if (filePath.equals("-1"))
+                return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
             Tile tileEntity = TileFactory.getTile(title, user.get(), filePath, content_type, 'I',
                     column.get());
             tileRepository.save(tileEntity);
@@ -86,7 +88,12 @@ public class TileController {
         Path filePath = Paths.get("user_generated_content");
         if (Files.notExists(filePath))
             Files.createDirectory(filePath);
-        String extension = content.getOriginalFilename().split("\\.")[1];
+        String extension = content.getOriginalFilename().split("\\.")[1].toLowerCase();
+        if (!extension.equals("png") && !extension.equals("jpg") && !extension.equals("jpeg")
+                && !extension.equals("bmp") && !extension.equals("gif") && !extension.equals("tif"))
+            return "-1";
+        if (!extension.equals("png") && !extension.equals("gif"))
+            extension = "png";
         File file = new File(filePath + "/" + new Date().getTime() +  "." + extension);
         if (file.createNewFile()) {
             BufferedImage bufferedImage = ImageIO.read(content.getInputStream());
@@ -180,10 +187,12 @@ public class TileController {
                 return new ResponseEntity<>("Cannot move a tile from an archived column.", HttpStatus.BAD_REQUEST);
             if (new_title != null)
                 tileEntity.setTitle(new_title);
-            String previousImage = null;
+            String previousImage = null, filePath = "";
             if (content != null) {
                 try {
-                    String filePath = saveImage(content);
+                    filePath = saveImage(content);
+                    if (filePath.equals("-1"))
+                        return new ResponseEntity<>("Unsupported file format.", HttpStatus.BAD_REQUEST);
                     if (tileEntity.getTile_type() == 'I')
                         previousImage = tileEntity.getContent();
                     tileEntity.setContent(filePath);
