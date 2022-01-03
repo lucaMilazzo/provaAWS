@@ -28,7 +28,7 @@ jobs:
         run: |
           aws elasticbeanstalk create-application-version \
           --application-name AWSprova \
-          --source-bundle S3Bucket="elasticbeanstalk-us-east-2-138926123313",S3Key="deploy_package.zip" \
+          --source-bundle S3Bucket="code-aws-prova",S3Key="deploy_package.zip" \
           --version-label "ver-${{ github.sha }}" \
           --description "commit-sha-${{ github.sha }}"
 
