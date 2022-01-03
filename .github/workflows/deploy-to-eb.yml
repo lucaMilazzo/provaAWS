@@ -1,36 +1,27 @@
-name: deploy-to-eb
-
+name: Deploy master
 on:
   push:
-    branches: [ master ]
+    branches:
+    - master
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
 
-      - name: Create ZIP deployment package
-        run: zip -r deploy_package.zip ./
+    - name: Checkout source code
+      uses: actions/checkout@v2
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.ACESSKEYID }}
-          aws-secret-access-key: ${{ secrets.SECRETACCESSKEY }}
-          aws-region: "us-east-2"
+    - name: Generate deployment package
+      run: zip -r deploy.zip . -x '*.git*'
 
-      - name: Upload package to S3 bucket
-        run: aws s3 cp deploy_package.zip s3://code-aws-prova/
-
-      - name: Create new ElasticBeanstalk Application Version
-        run: |
-          aws elasticbeanstalk create-application-version \
-          --application-name AWSprova \
-          --source-bundle S3Bucket="code-aws-prova",S3Key="deploy_package.zip" \
-          --version-label "ver-${{ github.sha }}" \
-          --description "commit-sha-${{ github.sha }}"
-
-      - name: Deploy new ElasticBeanstalk Application Version
-        run: aws elasticbeanstalk update-environment --environment-name Awsprova-env --version-label "Sample Application"
+    - name: Deploy to EB
+      uses: einaregilsson/beanstalk-deploy@v20
+      with:
+        aws_access_key: ${{ secrets.ACESSKEYID }}
+        aws_secret_key: ${{ secrets.SECRETACCESSKEY }}
+        application_name: AWSprova
+        environment_name:  Awsprova-env 
+        version_label: "ver-${{ github.sha }}"
+        region: "us-east-2"
+        deployment_package: deploy.zip
