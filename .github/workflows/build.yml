@@ -5,9 +5,10 @@ on:
       - main
 jobs:
   #Test's job
-  name: tests
-  runs-on: ubuntu-latest
-  steps:
+  Test:
+    name: tests
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
       - name: Set up JDK 16
